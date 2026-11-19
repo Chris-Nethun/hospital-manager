@@ -36,11 +36,25 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Public endpoints — no token needed
                 .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
-                .requestMatchers("/api/users/**", "/api/doctors").hasAnyRole("ADMIN")
+                // Admin-only management
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                // Doctor + Admin can see doctor appointments
+                .requestMatchers("/api/doctors/appointments").hasAnyRole("ADMIN", "DOCTOR")
+                // Patients book their own appointments
+                .requestMatchers("/api/patients/appointments").hasRole("PATIENT")
+                // User list — admin only (also enforced by @PreAuthorize in controller)
+                .requestMatchers("/api/users").hasRole("ADMIN")
+                // Doctor list — any authenticated user (patients need this to book)
+                .requestMatchers("/api/doctors").authenticated()
+                // Patient CRUD — clinical staff
                 .requestMatchers("/api/patients/**").hasAnyRole("ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST")
+                // Appointment management — clinical staff
                 .requestMatchers("/api/appointments/**").hasAnyRole("ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST")
+                // Medical records — clinical staff
                 .requestMatchers("/api/records/**").hasAnyRole("ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST")
+                // Every other path requires authentication
                 .anyRequest().authenticated())
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(jsonAuthenticationEntryPoint)

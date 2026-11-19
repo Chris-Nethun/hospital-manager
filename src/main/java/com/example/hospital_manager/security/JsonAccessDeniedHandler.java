@@ -1,6 +1,8 @@
 package com.example.hospital_manager.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -14,6 +16,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JsonAccessDeniedHandler implements AccessDeniedHandler {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     @Override
     public void handle(HttpServletRequest request,
@@ -29,6 +35,7 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
         body.put("message", "Access denied");
 
         response.setCharacterEncoding("UTF-8");
-        new ObjectMapper().writeValue(response.getOutputStream(), body);
+        MAPPER.writeValue(response.getOutputStream(), body);
     }
 }
+

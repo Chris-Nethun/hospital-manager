@@ -27,13 +27,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String authorization = request.getHeader("Authorization");
 
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            String token = authorization.substring(7);
+        // Use JwtUtil to extract the token from the Authorization header
+        String token = JwtUtil.extractBearerToken(request.getHeader(JwtUtil.AUTHORIZATION_HEADER));
+
+        if (token != null) {
+            if (!jwtService.isTokenValid(token)) {
+                ErrorResponseWriter.write(response, HttpServletResponse.SC_UNAUTHORIZED,
+                        "Unauthorized", "Invalid or tampered JWT token");
+                return;
+            }
+
             String username = jwtService.extractUsername(token);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null && jwtService.isTokenValid(token)) {
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails,
