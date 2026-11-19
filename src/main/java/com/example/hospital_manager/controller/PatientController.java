@@ -27,6 +27,12 @@ public class PatientController {
         this.patientService = patientService;
     }
 
+    @GetMapping("/admin/patients")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Patient> getAdminPatients() {
+        return patientService.getAllPatients(null);
+    }
+
     @GetMapping("/patients")
     @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','RECEPTIONIST')")
     public List<Patient> getPatients(@RequestParam(required = false) String name) {

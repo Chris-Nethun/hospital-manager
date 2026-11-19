@@ -14,6 +14,8 @@ public interface UserRepository extends JpaRepository<AppUser, Long> {
 
     boolean existsByUsername(String username);
 
+    boolean existsByPatientProfileId(Long patientId);
+
     @Query("SELECT u FROM AppUser u WHERE u.role = :role ORDER BY u.username")
     List<AppUser> findByRole(Role role);
 }
